@@ -8,14 +8,13 @@ players   <- load_players()
 contracts <- load_contracts()
 teams     <- load_teams()
 
-# Step 1: fastest TEs
-te_fast <- combine %>%
+fast_te <- combine %>%
   filter(pos == "TE", !is.na(forty), season >= 2016, season <= 2025) %>%
   arrange(forty) %>%
   slice_head(n = 10)
 
-# Step 2: normalize names that differ between combine and players table, then join headshot
-te_fast <- te_fast %>%
+# fix chig oknkwo name
+fast_te <- fast_te %>%
   mutate(lookup_name = case_when(
     player_name == "Chigoziem Okonkwo" ~ "Chig Okonkwo",
     TRUE ~ player_name
@@ -25,26 +24,23 @@ te_fast <- te_fast %>%
     by = c("lookup_name" = "display_name")
   )
 
-# Step 3: join contracts by player name
-best_contracts <- contracts %>%
+apy <- contracts %>%
   filter(!is.na(inflated_apy), inflated_apy > 0) %>%
   group_by(player) %>%
   slice_max(inflated_apy, n = 1, with_ties = FALSE) %>%
   ungroup() %>%
   select(player, inflated_apy)
 
-te_fast <- te_fast %>%
-  left_join(best_contracts, by = c("player_name" = "player"))
+fast_te <- fast_te %>%
+  left_join(apy, by = c("player_name" = "player"))
 
-# Step 4: join team logos on full team name
-te_fast <- te_fast %>%
+fast_te <- fast_te %>%
   left_join(
     teams %>% select(team_name, team_logo_espn),
     by = c("draft_team" = "team_name")
   )
 
-# Step 5: build table
-table_data <- te_fast %>%
+tbl <- fast_te %>%
   arrange(forty) %>%
   transmute(
     year         = season,
@@ -55,9 +51,7 @@ table_data <- te_fast %>%
     forty        = forty,
     inflated_apy = inflated_apy
   )
-
-# Step 6: render GT table
-gt_table <- table_data %>%
+gt_tbl <- tbl %>%
   gt() %>%
   gt_theme_espn() %>%
   gt_img_rows(columns = team_logo, img_source = "web", height = 30) %>%
@@ -79,5 +73,5 @@ gt_table <- table_data %>%
   ) %>%
   tab_header(title = "TE Contracts and 40 Yard Dash Times")
 
-print(gt_table)
-gtsave(gt_table, "te_table.html")
+print(gt_tbl)
+gtsave(gt_tbl, "te_table.html")
