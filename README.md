@@ -1,0 +1,1 @@
+Built an end-to-end R pipeline using the nflverse ecosystem to analyze NFL combine data and identify the fastest tight ends (2016–2025), integrating player metadata, contract data, and team branding. Produced a polished, ESPN-style table using the gt package, combining data wrangling, multi-source joins, and visual presentation for sports analytics insights.
